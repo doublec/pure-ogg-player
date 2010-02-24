@@ -1,0 +1,280 @@
+/* /usr/include/ogg/ogg.h: */
+using "lib:libogg";
+
+namespace ogg;
+extern void oggpack_writeinit(oggpack_buffer*);
+extern int oggpack_writecheck(oggpack_buffer*);
+extern void oggpack_writetrunc(oggpack_buffer*, long);
+extern void oggpack_writealign(oggpack_buffer*);
+extern void oggpack_writecopy(oggpack_buffer*, void*, long);
+extern void oggpack_reset(oggpack_buffer*);
+extern void oggpack_writeclear(oggpack_buffer*);
+extern void oggpack_readinit(oggpack_buffer*, void*, int);
+extern void oggpack_write(oggpack_buffer*, long, int);
+extern long oggpack_look(oggpack_buffer*, int);
+extern long oggpack_look1(oggpack_buffer*);
+extern void oggpack_adv(oggpack_buffer*, int);
+extern void oggpack_adv1(oggpack_buffer*);
+extern long oggpack_read(oggpack_buffer*, int);
+extern long oggpack_read1(oggpack_buffer*);
+extern long oggpack_bytes(oggpack_buffer*);
+extern long oggpack_bits(oggpack_buffer*);
+extern void* oggpack_get_buffer(oggpack_buffer*);
+extern void oggpackB_writeinit(oggpack_buffer*);
+extern int oggpackB_writecheck(oggpack_buffer*);
+extern void oggpackB_writetrunc(oggpack_buffer*, long);
+extern void oggpackB_writealign(oggpack_buffer*);
+extern void oggpackB_writecopy(oggpack_buffer*, void*, long);
+extern void oggpackB_reset(oggpack_buffer*);
+extern void oggpackB_writeclear(oggpack_buffer*);
+extern void oggpackB_readinit(oggpack_buffer*, void*, int);
+extern void oggpackB_write(oggpack_buffer*, long, int);
+extern long oggpackB_look(oggpack_buffer*, int);
+extern long oggpackB_look1(oggpack_buffer*);
+extern void oggpackB_adv(oggpack_buffer*, int);
+extern void oggpackB_adv1(oggpack_buffer*);
+extern long oggpackB_read(oggpack_buffer*, int);
+extern long oggpackB_read1(oggpack_buffer*);
+extern long oggpackB_bytes(oggpack_buffer*);
+extern long oggpackB_bits(oggpack_buffer*);
+extern void* oggpackB_get_buffer(oggpack_buffer*);
+extern int ogg_stream_packetin(ogg_stream_state*, ogg_packet*);
+extern int ogg_stream_iovecin(ogg_stream_state*, ogg_iovec_t*, int, long, int);
+extern int ogg_stream_pageout(ogg_stream_state*, ogg_page*);
+extern int ogg_stream_flush(ogg_stream_state*, ogg_page*);
+extern int ogg_sync_init(ogg_sync_state*);
+extern int ogg_sync_clear(ogg_sync_state*);
+extern int ogg_sync_reset(ogg_sync_state*);
+extern int ogg_sync_destroy(ogg_sync_state*);
+extern int ogg_sync_check(ogg_sync_state*);
+extern void* ogg_sync_buffer(ogg_sync_state*, long);
+extern int ogg_sync_wrote(ogg_sync_state*, long);
+extern long ogg_sync_pageseek(ogg_sync_state*, ogg_page*);
+extern int ogg_sync_pageout(ogg_sync_state*, ogg_page*);
+extern int ogg_stream_pagein(ogg_stream_state*, ogg_page*);
+extern int ogg_stream_packetout(ogg_stream_state*, ogg_packet*);
+extern int ogg_stream_packetpeek(ogg_stream_state*, ogg_packet*);
+extern int ogg_stream_init(ogg_stream_state*, int);
+extern int ogg_stream_clear(ogg_stream_state*);
+extern int ogg_stream_reset(ogg_stream_state*);
+extern int ogg_stream_reset_serialno(ogg_stream_state*, int);
+extern int ogg_stream_destroy(ogg_stream_state*);
+extern int ogg_stream_check(ogg_stream_state*);
+extern int ogg_stream_eos(ogg_stream_state*);
+extern void ogg_page_checksum_set(ogg_page*);
+extern int ogg_page_version(ogg_page*);
+extern int ogg_page_continued(ogg_page*);
+extern int ogg_page_bos(ogg_page*);
+extern int ogg_page_eos(ogg_page*);
+extern int ogg_page_granulepos(ogg_page*);
+extern int ogg_page_serialno(ogg_page*);
+extern long ogg_page_pageno(ogg_page*);
+extern int ogg_page_packets(ogg_page*);
+extern void ogg_packet_clear(ogg_packet*);
+using ffi, system;
+namespace ogg;
+
+let ogg::oggpack_buffer_t = struct_t (slong_t,    //  long endbyte;
+                                      sint_t,     //  int  endbit;
+                                      pointer_t,  //  unsigned char *buffer;
+                                      pointer_t,  //  unsigned char *ptr;
+                                      slong_t);   //  long storage;
+
+let ogg::ogg_sync_state_t = struct_t (pointer_t,  // unsigned char *data;
+                                      sint_t,     // int storage;
+                                      sint_t,     // int fill;
+                                      sint_t,     // int returned;
+                                      sint_t,     // int unsynced;
+                                      sint_t,     // int headerbytes;
+                                      sint_t);    // int bodybytes;
+
+let ogg::ogg_page_t = struct_t (pointer_t,   // unsigned char *header;
+                                slong_t,     // long header_len;
+                                pointer_t,   // unsigned char *body;
+                                slong_t);    // long body_len;
+
+ogg::raw_page (ogg_page (raw, _)) = raw;
+
+ogg::ogg_stream_pageout state page::ogg_page = ogg_stream_pageout state (raw_page page);
+ogg::ogg_stream_flush state page::ogg_page = ogg_stream_flush state (raw_page page);
+ogg::ogg_sync_pageseek state page::ogg_page = ogg_sync_pageseek state (raw_page page);
+ogg::ogg_sync_pageout state page::ogg_page = ogg_sync_pageout state (raw_page page);
+ogg::ogg_stream_pagein state page::ogg_page = ogg_stream_pagein state (raw_page page);
+ogg::ogg_page_checksum_set page::ogg_page = ogg_page_checksum_set (raw_page page);
+ogg::ogg_page_version page::ogg_page = ogg_page_version (raw_page page);
+ogg::ogg_page_continued page::ogg_page = ogg_page_continued (raw_page page);
+ogg::ogg_page_bos page::ogg_page = ogg_page_bos (raw_page page);
+ogg::ogg_page_eos page::ogg_page = ogg_page_eos (raw_page page);
+ogg::ogg_page_granulepos page::ogg_page = ogg_page_granulepos (raw_page page);
+ogg::ogg_page_serialno page::ogg_page = ogg_page_serialno (raw_page page);
+ogg::ogg_page_pageno page::ogg_page = ogg_page_pageno (raw_page page);
+ogg::ogg_page_packets page::ogg_page = ogg_page_packets (raw_page page);
+
+extern void* memcpy(void*,void*,int) = cmemcpy;
+
+// The libogg ogg_page object has an internal pointers that are only
+// valid during between API calls. 'wrap_raw_page' makes a copy of
+// the libogg ogg_page object, including coppying the internal 
+// pointers. This is wrapped in a Pure 'ogg_page' object that holds
+// the original raw libogg object and a list of the internal pointers
+// so they can be free'd later.
+ogg::wrap_raw_page raw = 
+  sentry clear wrapped
+  with 
+    clear (ogg_page (_, s)) = do free s;
+  end
+  when
+    h = get (raw!0);
+    hl = get (raw!1);
+    b = get (raw!2);
+    bl = get (raw!3);
+    hm = malloc hl;
+    bm = malloc bl;
+    header = cmemcpy hm h hl; 
+    body = cmemcpy bm b bl;
+    page = struct ogg_page_t (header, hl, body, bl);
+    wrapped = ogg_page (page, [hm, bm]);
+  end;
+
+let ogg::ogg_packet_t = struct_t (pointer_t, // unsigned char *packet;
+                                  slong_t,   // long  bytes;
+                                  slong_t,   // long  b_o_s;
+                                  slong_t,   // long  e_o_s;
+                                  sint64_t,  // ogg_int64_t  granulepos;
+                                  sint64_t); // ogg_int64_t  packetno; 
+
+ogg::raw_packet (ogg_packet (raw, _)) = raw;
+
+ogg::ogg_stream_packetin state packet::ogg_packet = ogg_stream_packetin state (raw_packet packet);
+ogg::ogg_stream_packetout state packet::ogg_packet = ogg_stream_packetout state (raw_packet packet);
+ogg::ogg_stream_packetpeek state packet::ogg_packet = ogg_stream_packetpeek (raw_packet packet);
+ogg::ogg_packet_clear packet::ogg_packet = ogg_packet_clear (raw_packet packet);
+
+// See comments for 'wrap_raw_packet' above. The libogg ogg_packet structure also
+// has internal memory that does not stay valid between API calls.
+ogg::wrap_raw_packet raw = 
+  sentry clear wrapped
+  with 
+    clear (ogg_packet (_, s)) = (do free s);
+  end
+  when
+    h = get (raw!0);
+    hl = get (raw!1);
+    bos = get (raw!2);
+    eos = get (raw!3);
+    granulepos = get (raw!4);
+    packetno = get (raw!5);
+    hm = malloc hl;
+    p = cmemcpy hm h hl; 
+    packet = struct ogg_packet_t (p, hl, bos, eos, granulepos, packetno);
+    wrapped = ogg_packet (packet, [hm]);
+  end;
+
+ogg::char_array_t n::int = tuple [schar_t | i = 1..n];
+
+extern size_t strlen(void *s) = cstrlen;
+ogg::char_array n::int s::string = tuple {v, {0|i=#v+1..n}} when
+  p = byte_cstring s; l = cstrlen p;
+  v = byte_matrix (int l) p; free p; v = take n v;
+end;
+
+let ogg::ogg_stream_state_t = struct_t (pointer_t, // unsigned char   *body_data;
+                                        slong_t,   // long    body_storage;
+                                        slong_t,   // long    body_fill;
+                                        slong_t,   // long    body_returned;
+                                        pointer_t, // int     *lacing_vals; 
+                                        pointer_t, // ogg_int64_t *granule_vals;
+                                        slong_t,   // long    lacing_storage;
+                                        slong_t,   // long    lacing_fill;
+                                        slong_t,   // long    lacing_packet;
+                                        slong_t,   // long    lacing_returned;
+                                        char_array_t 282, // unsigned char    header[282]; 
+                                        sint_t,    // int              header_fill;
+                                        sint_t,    // int     e_o_s;
+                                        sint_t,    // int     b_o_s;
+                                        slong_t,   // long    serialno;
+                                        slong_t,   // long    pageno;
+                                        sint64_t,  // ogg_int64_t  packetno;
+                                        sint64_t); // ogg_int64_t   granulepos;
+
+ogg::make_ogg_stream_state = struct ogg_stream_state_t (NULL,
+                                                        0, 0, 0, 
+                                                        NULL, NULL,
+                                                        0, 0, 0, 0, 
+                                                        char_array 282 "",
+                                                        0,0,0,
+                                                        0,0,
+                                                        0,0);
+
+// Read an Ogg page into the ogg_page_t structure.
+ogg::read_page fd state page = 
+  read_page_or_eof (feof fd)
+  with
+    pageout = ogg_sync_pageout state page == 1;
+    read_page_or_eof 1 = pageout; 
+    read_page_or_eof 0 = pageout || new_page;
+    written 0 = pageout;
+    written n = (ogg_sync_wrote state n == 0) && read_page fd state page;
+    new_page = written (fread (ogg_sync_buffer state 4096) 1 4096 fd);
+  end;
+
+// Return a lazy list of ogg pages from the file
+ogg::pages fd state = 
+  lazy_pages page fd state (read_page fd state page)
+  when
+    page = struct ogg_page_t (NULL, 0, NULL, 0);
+  end
+  with
+    lazy_pages page fd state 0 = [];
+    lazy_pages page fd state 1 = wrap_raw_page page : pages fd state &;
+  end;
+                
+// Open the file with the given name and return a lazy list of ogg pages from that file. 
+ogg::file_pages fn::string = 
+  if ogg_sync_init state  == 0 then
+    pages fd state
+  else
+    0
+  when
+    fd = fopen fn "rb";
+    state = struct ogg_sync_state_t (pointer 0,0,0,0,0,0,0);
+  end;
+
+// Given a list of Ogg pages return a lazy list of packets. The packets returned
+// are for the Ogg logical bitstream within the pages that has the serial number of the 
+// first page in the list. The result of this call is a tuple containing the
+// lazy list of packets and the serial number of the logical bitstream these packets
+// are for.
+//
+// For example, to retrieve two physical bitstreams for a list of pages:
+//   let p = file_pages "foo.ogg";
+//   let (p2,s2) = packets p;
+//   let (p3,s3) = packets (filter (\p->ogg_page_serialno p ~= s2) p);
+ogg::packets [] = ([], 0);
+ogg::packets pages = 
+  if ogg_stream_init state serial == 0 then
+    (next_packet serial state packet (packetout state packet) pages, serial)
+  else
+    ([], 0)
+  when
+    state = make_ogg_stream_state;
+    serial = ogg_page_serialno (pages!0);
+    packet = struct ogg_packet_t (NULL, 0, 0, 0, 0L, 0L);
+  end 
+  with
+    packetout state packet = ogg_stream_packetout state packet;
+    next_packet serial state packet 1 stream_pages = 
+      wrap_raw_packet packet:(next_packet serial state packet (packetout state packet) stream_pages)&;
+    next_packet serial state packet 0 (page:xs) = 
+      // Only process pages with the physical bitstream serial number
+      // we're interested in.
+      if ogg_page_serialno page == serial then
+        if ogg_stream_pagein state page == 0 then
+          next_packet serial state packet (packetout state packet) xs
+        else
+          []
+      else
+        next_packet serial state packet 0 xs;
+    next_packet _ _ _ 0 [] = [];
+  end;
+               

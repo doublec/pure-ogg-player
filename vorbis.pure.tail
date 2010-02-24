@@ -1,0 +1,48 @@
+using ffi, system, ogg;
+using namespace ogg, vorbis;
+
+let vorbis::vorbis_block_t = struct_t (pointer_t,        //  float  **pcm;
+                                       oggpack_buffer_t, // opb;
+                                       slong_t,          // long  lW;
+                                       slong_t,          // long  W;
+                                       slong_t,          // long  nW;
+                                       sint_t,           // int   pcmend;
+                                       sint_t,           // int   mode;
+                                       sint_t,           // int         eofflag;
+                                       sint64_t,         // ogg_int64_t granulepos;
+                                       sint64_t,         // ogg_int64_t sequence;
+                                       pointer_t,        // vorbis_dsp_state *vd;
+                                       pointer_t,        // void               *localstore;
+                                       slong_t,          // long                localtop;
+                                       slong_t,          // long                localalloc;
+                                       slong_t,          // long                totaluse;
+                                       pointer_t);       // struct alloc_chain *reap;
+
+vorbis::make_vorbis_block = cooked (malloc 108);
+vorbis::make_vorbis_dsp_state = cooked (malloc 104);
+
+let vorbis::vorbis_info_t = struct_t (sint_t,     // int version;
+                                      sint_t,     // int channels;
+                                      slong_t,    // long rate;
+                                      slong_t,    // long bitrate_upper;
+                                      slong_t,    // long bitrate_nominal;
+                                      slong_t,    // long bitrate_lower;
+                                      slong_t,    // long bitrate_window;
+                                      pointer_t); // void *codec_setup;
+
+vorbis::make_vorbis_info = struct vorbis_info_t (0,0,0,0,0,0,0,NULL);
+
+let vorbis::vorbis_comment_t = struct_t (pointer_t,   //  char **user_comments;
+                                         pointer_t,   //  int   *comment_lengths;
+                                         sint_t,      //  int    comments;
+                                         string_t);   // char  *vendor;
+
+vorbis::make_vorbis_comment = struct vorbis_comment_t (NULL, NULL, 0, "");
+
+vorbis::vorbis_commentheader_out comment packet::ogg_packet = vorbis_commentheader_out comment (raw_packet packet);
+vorbis::vorbis_synthesis_idheader packet::ogg_packet = vorbis_synthesis_idheader (raw_packet packet);
+vorbis::vorbis_synthesis_headerin info comment packet::ogg_packet = vorbis_synthesis_headerin info comment (raw_packet packet);
+vorbis::vorbis_synthesis block packet::ogg_packet = vorbis_synthesis block (raw_packet packet);
+vorbis::vorbis_synthesis_trackonly block packet::ogg_packet = vorbis_synthesis_trackonly block (raw_packet packet);
+vorbis::vorbis_packet_blocksize info packet::ogg_packet = vorbis_packet_blocksize info (raw_packet packet);
+

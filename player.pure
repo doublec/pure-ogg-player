@@ -1,0 +1,226 @@
+using ogg, vorbis, al, alc, system, ffi;
+using namespace ogg, vorbis, openal;
+
+// Return true if the packet is a vorbis header packet
+vorbis_headerp packet = vorbis_synthesis_idheader packet;
+
+// Given a lazy list of packets, process the vorbis header packets, stopping
+// when we reach the first data packet. Initialize a vorbis_decoder used to
+// decode the data packets using the header information. The decoder object
+// returned is:
+//   vorbis_decoder (block, dsp, info, comment, packets)
+//
+// block and dsp are the libvorbis objects required to manage the decoder
+// state. 'info' and 'comment' contain the data obtained from the header
+// packets. 'packets' is a lazy list of the vorbis data packets.
+vorbis_header packets@(x:xs) = 
+  if vorbis_synthesis_headerin info comment x == OV_ENOTVORBIS then 
+    packets 
+  else 
+    remaining_headers info comment xs
+  with
+    remaining_headers info comment packets@(x:xs) = 
+      if vorbis_synthesis_headerin info comment x == OV_ENOTVORBIS then
+        vorbis_synthesis_init dsp info $$
+        vorbis_block_init dsp block $$
+        vorbis_decoder (block,dsp,info,comment,packets) 
+        when
+          block = make_vorbis_block;
+          dsp = make_vorbis_dsp_state;
+        end
+      else
+        remaining_headers info comment xs;
+  end
+  when 
+    info = vorbis_info_init p $$ p when p = make_vorbis_info end;
+    comment = vorbis_comment p $$ p when p = make_vorbis_comment end;
+  end;
+
+// Decode a vorbis packet returning a 'pcm' object:
+//   pcm (data, decoder)  
+// 'data' contains the PCM audio data that was decoded as a matrix
+// of floating point values. 'decoder' is the decoder object to be
+// used to decode the next packet of audio data.
+decode_packet decoder@(vorbis_decoder (block,dsp,info,comment,packets)) = 
+    if samples > 0 then
+      decode_pcm 
+    else 
+      blockin packets
+    with
+      process_data data samples channels = 
+        vorbis_synthesis_read dsp samples $$ matrix m
+        when
+          f0 = get_pointer data;
+          floats = [get_pointer (f0+(x*4))|x=0..(channels-1)];
+          m = map (float_matrix samples) floats;
+        end;
+      decode_pcm = pcm ((process_data data samples channels), decoder);
+      blockin (x:xs) = 
+       if vorbis_synthesis block x == 0 then
+        vorbis_synthesis_blockin dsp block $$ 
+        decode_packet (vorbis_decoder (block,dsp,info,comment,xs))
+       else
+        pcm ({},0);
+      blockin [] = pcm ({},0);
+    end
+    when
+      data = sentry free (malloc (sizeof pointer_t));
+      samples = vorbis_synthesis_pcmout dsp data;
+      channels = get (info!1);
+    end;
+
+
+// Return a lazy list of matrices containing audio sample data in floating
+// point format.   
+pcm_data decoder@(vorbis_decoder (block,dsp,info,comment,packets)) =
+  if #data > 0 then data : pcm_data next_decoder & else pcm_data next_decoder 
+  when
+    pcm (data,next_decoder) = decode_packet decoder;
+  end;
+pcm_data 0 = [];
+
+// Throw an error if an OpenAL API call failed.
+alcheck = if error == AL_NO_ERROR then 
+            () 
+          else 
+            throw error 
+          when 
+            error = alGetError;
+          end;
+clear_error = alGetError $$ ();
+
+let device = alcOpenDevice NULL;
+let context = alcCreateContext device NULL; 
+alcMakeContextCurrent context;
+clear_error;
+
+let sources = {1};
+alGenSources (#sources) (pointer sources);
+alcheck;
+
+alSourcef (sources!0) AL_GAIN 1.0;
+alcheck;
+
+alSourcef (sources!0) AL_GAIN 1.0;
+alcheck;
+
+// Convert the floating point sample value into an short16 value clamped 
+// to the correct range.
+clamp n = 
+  mined
+  when
+    scaled = n * 32767.0;
+    floored = floor (0.5 + scaled);
+    trunced = int floored;
+    maxed = if trunced > 32767 then 32767 else trunced;
+    mined = if maxed < (-32768) then (-32768) else maxed;
+  end;
+
+// Convert a matrix of floating point audio data to a matrix of short16 sound data.
+buffer16 s = pack (map clamp s);
+
+// Queue the matrix of floating point audio data in 's' with playback rate of 'rate' into
+// OpenAL source 'source'.
+queue_sample source rate s = 
+  alGenBuffers (#buffer) (pointer buffer) $$
+  alcheck $$
+  alBufferData (buffer!0) AL_FORMAT_STEREO16 (cooked (short_pointer NULL data)) ((#data) * (sizeof sshort_t)) rate $$
+  alcheck $$
+  alSourceQueueBuffers source 1 (pointer buffer) $$
+  alcheck  
+  when
+    buffer = {-1};
+    data = buffer16 s;
+  end;
+
+// Return the number of OpenAL buffers queued for playback
+queued source = alGetSourcei source AL_BUFFERS_QUEUED (pointer x) $$ alcheck $$ (x!0) when x={-1} end;
+
+// Return the number of OpenAL buffers that have been processed but
+// not yet removed from the queue.
+processed source = alGetSourcei source AL_BUFFERS_PROCESSED (pointer x) $$ alcheck $$ (x!0) when x={-1} end;
+
+// Return the OpenAL playback state of the source.
+source_state source = alGetSourcei source AL_SOURCE_STATE (pointer x) $$ alcheck $$ (x!0) when x={-1} end;
+
+// Start a source playing if it isn't already.
+play source = 
+  if (source_state source) == AL_PLAYING then
+    AL_PLAYING
+  else
+    alSourcePlay source $$ alcheck $$ (source_state source);
+
+// Unqueue and delete all unprocessed OpenAL buffers that are queued.
+unqueue_processed source 0 = [];
+unqueue_processed source n =
+    alSourceUnqueueBuffers source n mem $$
+    alcheck $$
+    alDeleteBuffers n mem $$
+    alcheck
+  when
+    mem = sentry free (malloc ((sizeof sint_t) * n));
+  end;
+
+// Play the remaining OpenAL buffers that are queued in the source.
+play_pcm source rate [] =
+  if queued source > 0 then
+    unqueue_processed source (processed source) $$
+    nanosleep 0.1 $$
+    play_pcm source rate []
+  else 
+    ();
+
+// Play the lazy list of PCM data by queuing them onto the source up to a 
+// maximum number of queued buffers (currently 50). At this point sleep for a
+// bit if the maximum number is queued.
+play_pcm source rate pcm@(x:xs) =
+  if queued source > 50 then
+    unqueue_processed source (processed source) $$
+    nanosleep 0.1 $$
+    play_pcm source rate pcm
+  else
+    queue_sample source rate (transpose x) $$
+    play source $$
+    play_pcm source rate xs;
+
+// Decode the lazy list of vorbis packets and play them.
+play_packets source packets = 
+  play_pcm source rate pcm
+  when
+    decoder@(vorbis_decoder (_,_,info,_,_)) = vorbis_header packets;
+    rate = get (info!2);
+    pcm = pcm_data decoder;
+  end;
+
+// Return a lazy list of all physical bitstreams contained in the lazy list of pages.
+// The returned list has elements of:
+//   (packets, serialno)
+all_streams pages =
+  collect_streams pages 
+  with
+    collect_streams [] = [];
+    collect_streams pages = 
+      (p,serialno):(collect_streams remaining) &
+      when
+        (p,serialno) = packets pages;
+        remaining = filter (\page->ogg_page_serialno page ~= serialno) pages;
+      end;
+  end;
+
+// Return a list of all the vorbis streams in the given list of streams.
+vorbis_streams streams = 
+  filter vorbisp streams
+  with
+    vorbisp (packets,_) = vorbis_headerp (packets!0);
+  end;
+
+// Play the vorbis file to the given source. This will pick the first vorbis
+// stream containied within the specified Ogg file.
+play_vorbis source filename =
+  play_packets source packets
+  when
+    pages = file_pages filename;
+    all = all_streams pages;
+    vorbis = vorbis_streams all;
+    (packets, serialno) = vorbis!0;
+  end;
