@@ -1,0 +1,97 @@
+pure-ogg-player
+===============
+
+This is Pure library for playing Ogg files and contains various
+utility functions for manipulating them.
+
+It is very much a work in progress and currently only plays
+Ogg files containing Vorbis streams. 
+
+OpenAL is used for audio playback.
+
+Building
+========
+
+Some files in the archive are automatically generated using
+'pure-gen' run against the OpenAL and libogg header files. 
+You can regenerate these by running:
+
+  $ sh build.sh
+
+The generated files are also included here so you don't need
+to do this step.
+
+Usage
+=====
+
+$ pure -i player.pure
+
+Play a vorbis file:
+> play_vorbis (sources!0) "test.ogg";
+
+Load an Ogg file getting a lazy list of all pages in the file:
+
+> using namespace ogg;
+> let p = file_pages "test.ogg";
+> p;
+ogg_page (#<pointer 0x9e61cc8>,[...]):#<thunk 0xb7259b38>
+
+Get a list of all packets and the serial number of the 
+first logical bitstream in the list of pages:
+
+> let (stream1,serialno) = packets p;
+> serialno;
+1426627898
+> stream1;
+  ogg_packet (#<pointer 0x9dd98f0>,[...]):#<thunk 0xb725bce0>
+
+Get the next logical bitstream:
+
+> let p2 = filter (\x->ogg_page_serialno x ~= serialno) p;
+> p2;
+#<thunk 0xb725dc30>
+> let (stream2,serialno2) = packets p2;
+> serialno2;
+629367739
+> stream2;
+ogg_packet (#<pointer 0x9cfcf08>,[...]):#<thunk 0xb725c988>
+
+Note that all these results are lazily evaluated so the entire
+file is not loaded into memory. If we look at the original list
+of pages you'll see what has been read so far (two pages):
+
+> p;
+ogg_page (...):ogg_page (...):#<thunk 0xb725dd98>
+
+Get all the streams in the file:
+
+> let s = all_streams p;
+
+Get all the vorbis streams:
+
+> let v = vorbis_streams s;
+
+Get the first vorbis stream:
+
+> let (v1, _) = v!0;
+
+Decode the vorbis header packets and intialize a vorbis decoder
+for the first vorbis stream:
+
+> let decoder = vorbis_header v1;
+
+Get a lazy list of all the decoded PCM data from the vorbis stream:
+
+> let pcm = pcm_data decoder;
+
+Author
+======
+Comments and suggestions can be made to the author:
+
+  Chris Double
+  chris.double@double.co.nz
+  http://bluishcoder.co.nz
+
+The github repository for this library is:
+
+  http://github.com/doublec/pure-ogg-player
