@@ -84,6 +84,16 @@ Get a lazy list of all the decoded PCM data from the vorbis stream:
 
 > let pcm = pcm_data decoder;
 
+Troubleshooting
+===============
+
+1) 100% usage when loading player.pure on Linux
+
+  The seems to be a problem with the OpenAL library shipping with
+  Ubuntu 9.10. I fixed this by building libopenal-soft from source:
+
+    http://repo.or.cz/w/openal-soft.git
+
 Author
 ======
 Comments and suggestions can be made to the author:
